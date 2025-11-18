@@ -1,0 +1,47 @@
+name: Build and Deploy Devioz Backend
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/jjosuech/deviozbackend:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/jjosuech/deviozbackend:latest
+
+  deploy-to-azure:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container Instances
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: Despliegue
+          name: devioz-backend
+          image: ghcr.io/jjosuech/deviozbackend:latest
+          dns-name-label: devioz-backend
+          ports: "8081"

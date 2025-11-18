@@ -1,0 +1,32 @@
+# Carpetas generadas automáticamente
+build
+.gradle
+
+# Configuración del IDE
+.idea
+*.iml
+*.ipr
+*.iws
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+
+# No enviar variables reales a Docker
+application.properties
+application.yml
+
+# Archivos del sistema
+*.swp
+*.swo
