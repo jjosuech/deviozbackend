@@ -41,6 +41,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+
       - name: Deploy to Azure Container Instances
         uses: azure/aci-deploy@v1
         with:
