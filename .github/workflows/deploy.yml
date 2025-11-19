@@ -50,4 +50,4 @@ jobs:
           name: devioz-backend
           image: ghcr.io/jjosuech/deviozbackend:latest
           dns-name-label: devioz-backend
-          ports: "8081"
+          ports: 8081
