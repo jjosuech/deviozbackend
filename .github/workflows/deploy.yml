@@ -44,7 +44,7 @@ jobs:
       - name: Deploy to Azure Container Instances
         uses: azure/aci-deploy@v1
         with:
-          resource-group: Despliegue
+          resource-group: Despliegue2
           location: chilecentral
           name: devioz-backend
           image: ghcr.io/jjosuech/deviozbackend:latest
