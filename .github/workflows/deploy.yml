@@ -45,7 +45,7 @@ jobs:
         uses: azure/aci-deploy@v1
         with:
           resource-group: Despliegue
-          location: eastus
+          location: eastus2
           name: devioz-backend
           image: ghcr.io/jjosuech/deviozbackend:latest
           dns-name-label: devioz-backend
