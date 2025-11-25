@@ -16,9 +16,20 @@ public class Categoria {
     @Column(length = 100)
     private String icon;
 
+    @Column(columnDefinition = "json")
+    private String children;
+
     //Relación opcional: una categoría puede tener muchos productos
-    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Producto> productos;
+    //@OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    //private List<Producto> productos;
+
+    public String getChildren() {
+        return children;
+    }
+
+    public void setChildren(String children) {
+        this.children = children;
+    }
 
     // 🔹 Getters y Setters
     public Long getId() {
@@ -45,11 +56,11 @@ public class Categoria {
         this.icon = icon;
     }
 
-    public List<Producto> getProductos() {
-        return productos;
-    }
+    //public List<Producto> getProductos() {
+       // return productos;
+    //}
 
-    public void setProductos(List<Producto> productos) {
-        this.productos = productos;
-    }
+    //public void setProductos(List<Producto> productos) {
+      //  this.productos = productos;
+    //}
 }
