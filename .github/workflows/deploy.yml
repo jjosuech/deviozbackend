@@ -17,10 +17,9 @@ jobs:
         uses: actions/checkout@v3
 
 
-
-      # ================================
+      # ========================================
       # HASHICORP VAULT (OBTENER SECRETOS DESDE VM)
-      # ================================
+      # ========================================
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -32,25 +31,32 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H 4.174.128.87 >> ~/.ssh/known_hosts
 
-      - name: Fetch secrets from Vault on VM
+      - name: Fetch DB_PASSWORD from Vault on VM
         env:
           ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
           SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
         run: |
-          ssh azureuser@4.174.128.87 << EOF
-            export ROLE_ID=$ROLE_ID
-            export SECRET_ID=$SECRET_ID
-            vault write auth/approle/login role_id=$ROLE_ID secret_id=$SECRET_ID -format=json > auth.json
-            cat auth.json | jq -r '.auth.client_token' > token.txt
-            export VAULT_TOKEN=\$(cat token.txt)
-            vault kv get -field=DB_PASSWORD secret/prod/db > db_password.txt
-            echo "DB_PASSWORD=\$(cat db_password.txt)" >> /tmp/github_env_vars
-          EOF
+          DB_PASSWORD=$(ssh -o StrictHostKeyChecking=no azureuser@4.174.128.87 "
+          export ROLE_ID='$ROLE_ID'
+          export SECRET_ID='$SECRET_ID'
 
-      - name: Load secrets from VM
-        run: |
-          cat /tmp/github_env_vars >> $GITHUB_ENV      
+          # Login a Vault con AppRole
+          CLIENT_TOKEN=\$(vault write auth/approle/login role_id=\$ROLE_ID secret_id=\$SECRET_ID -format=json | jq -r '.auth.client_token')
 
+          # Exportar token
+          export VAULT_TOKEN=\$CLIENT_TOKEN
+
+          # Obtener secreto
+          vault kv get -field=DB_PASSWORD secret/prod/db
+          ")
+          
+          echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
+
+    
+    
+    
+    
+    
 
       # =====================================
       # AZURE KEY VAULT (REEMPLAZO DE CCKM)
