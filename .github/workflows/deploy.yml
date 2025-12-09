@@ -21,6 +21,17 @@ jobs:
       # ================================
       # HASHICORP VAULT (OBTENER SECRETOS DESDE VM)
       # ================================
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+
+      - name: Add VM to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 4.174.128.87 >> ~/.ssh/known_hosts
+
       - name: Fetch secrets from Vault on VM
         env:
           ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
