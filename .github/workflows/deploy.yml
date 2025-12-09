@@ -35,6 +35,9 @@ jobs:
           SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
         run: |
           CLIENT_TOKEN=$(vault write auth/approle/login role_id=$ROLE_ID secret_id=$SECRET_ID -format=json | jq -r '.auth.client_token')
+          
+          export VAULT_TOKEN=$CLIENT_TOKEN
+          
           echo "VAULT_TOKEN=$CLIENT_TOKEN" >> $GITHUB_ENV
           
           DB_PASSWORD=$(vault kv get -field=DB_PASSWORD secret/prod/db)
