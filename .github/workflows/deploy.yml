@@ -16,54 +16,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-
       # ========================================
-      # HASHICORP VAULT (OBTENER SECRETOS DESDE VM)
+      # LOGIN Y OBTENER SECRETOS DESDE VAULT
       # ========================================
-
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-
-      - name: Add VM to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H 4.174.128.87 >> ~/.ssh/known_hosts
-
-      - name: Fetch DB_PASSWORD from Vault on VM
+      - name: Login to Vault and fetch secrets
         env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
           SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}   # <-- usa tu secret de GitHub
-
         run: |
-          DB_PASSWORD=$(ssh -o StrictHostKeyChecking=no azureuser@4.174.128.87 "
-          export ROLE_ID='$ROLE_ID'
-          export SECRET_ID='$SECRET_ID'
-          export VAULT_ADDR='$VAULT_ADDR'    #<-- esto asegura que Vault CLI use HTTP correcto
-
-          # Login a Vault con AppRole
-          CLIENT_TOKEN=\$(vault write auth/approle/login role_id=\$ROLE_ID secret_id=\$SECRET_ID -format=json | jq -r '.auth.client_token')
-
-          # Exportar token
-          export VAULT_TOKEN=\$CLIENT_TOKEN
-
-          # Obtener secreto
-          vault kv get -field=DB_PASSWORD secret/prod/db
-          ")
+          CLIENT_TOKEN=$(vault write auth/approle/login role_id=$ROLE_ID secret_id=$SECRET_ID -format=json | jq -r '.auth.client_token')
+          echo "VAULT_TOKEN=$CLIENT_TOKEN" >> $GITHUB_ENV
+          
+          DB_PASSWORD=$(vault kv get -field=DB_PASSWORD secret/prod/db)
+          MASTER_KEY=$(vault kv get -field=MASTER_KEY secret/prod/master)
           
           echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
+          echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
 
-    
-    
-    
-    
-    
-
-      # =====================================
-      # AZURE KEY VAULT (REEMPLAZO DE CCKM)
-      # =====================================
+      # ========================================
+      # LOGIN A AZURE PARA OBTENER OTROS SECRETOS
+      # ========================================
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -74,11 +47,9 @@ jobs:
           MASTER_KEY=$(az keyvault secret show --name devioz_master_key --vault-name josue-keyvault --query value -o tsv)
           echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
 
-
-
-      # -------------------------------
+      # ========================================
       # DOCKER BUILD & PUSH
-      # -------------------------------
+      # ========================================
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -97,39 +68,9 @@ jobs:
         run: |
           docker push ghcr.io/jjosuech/deviozbackend:latest
 
-
-  # ==================================================
-  # DEPLOY A AZURE (INYECTAR SECRETOS EN CONTENEDOR)
-  # ==================================================
-  #deploy-to-azure:
-  #  needs: build-and-push-image
-  #  runs-on: ubuntu-latest
-
-  #  steps:
-  #    - name: Azure Login
-  #      uses: azure/login@v1
-  #      with:
-  #        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-
-  #    - name: Deploy to Azure Container Instances
-  #      uses: azure/aci-deploy@v1
-  #      with:
-  #        resource-group: Despliegue2
-  #        location: chilecentral
-  #        name: devioz-backend
-  #        image: ghcr.io/jjosuech/deviozbackend:latest
-  #        dns-name-label: devioz-backend
-  #        ports: 8081
-
-  #        environment-variables: |
-  #          DB_PASSWORD=${{ env.DB_PASSWORD }}
-  #          MASTER_KEY=${{ env.MASTER_KEY }}
-    
-
-  # ==================================================
-  # DEPLOY A VM CON DOCKER
-  # ==================================================
+  # ========================================
+  # DEPLOY A VM
+  # ========================================
   deploy-to-vm:
     needs: build-and-push-image
     runs-on: ubuntu-latest
@@ -143,17 +84,10 @@ jobs:
       - name: Deploy Docker container on VM
         run: |
           ssh azureuser@4.174.128.87 << 'EOF'
-            # Parar y eliminar contenedor existente si existe
             docker rm -f devioz-backend || true
-
-            # Loguearse a GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # Traer la imagen
             docker pull ghcr.io/jjosuech/deviozbackend:latest
             docker tag ghcr.io/jjosuech/deviozbackend:latest deviozbackend:latest
-
-            # Correr el contenedor con secretos
             docker run -d \
               --name devioz-backend \
               -p 8081:8081 \
