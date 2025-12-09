@@ -19,6 +19,15 @@ jobs:
       # ========================================
       # LOGIN Y OBTENER SECRETOS DESDE VAULT
       # ========================================
+      - name: Install Vault and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip jq
+          wget https://releases.hashicorp.com/vault/1.15.5/vault_1.15.5_linux_amd64.zip
+          unzip vault_1.15.5_linux_amd64.zip
+          sudo mv vault /usr/local/bin/vault
+          vault --version
+
       - name: Login to Vault and fetch secrets
         env:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
