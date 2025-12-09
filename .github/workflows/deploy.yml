@@ -40,8 +40,9 @@ jobs:
           
           echo "VAULT_TOKEN=$CLIENT_TOKEN" >> $GITHUB_ENV
           
-          DB_PASSWORD=$(vault kv get -field=DB_PASSWORD secret/prod/db)
-          MASTER_KEY=$(vault kv get -field=MASTER_KEY secret/prod/master)
+          # ✅ FORZAR KV v1 CON curl (NO kv get)
+          DB_PASSWORD=$(vault read -field=DB_PASSWORD secret/prod/db)
+          MASTER_KEY=$(vault read -field=MASTER_KEY secret/prod/master)
           
           echo "DB_PASSWORD=$DB_PASSWORD" >> $GITHUB_ENV
           echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
