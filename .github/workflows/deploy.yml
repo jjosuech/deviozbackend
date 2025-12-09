@@ -35,10 +35,13 @@ jobs:
         env:
           ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
           SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}   # <-- usa tu secret de GitHub
+
         run: |
           DB_PASSWORD=$(ssh -o StrictHostKeyChecking=no azureuser@4.174.128.87 "
           export ROLE_ID='$ROLE_ID'
           export SECRET_ID='$SECRET_ID'
+          export VAULT_ADDR='$VAULT_ADDR'    #<-- esto asegura que Vault CLI use HTTP correcto
 
           # Login a Vault con AppRole
           CLIENT_TOKEN=\$(vault write auth/approle/login role_id=\$ROLE_ID secret_id=\$SECRET_ID -format=json | jq -r '.auth.client_token')
