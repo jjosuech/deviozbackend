@@ -56,6 +56,7 @@ jobs:
           MASTER_KEY=$(az keyvault secret show --name devioz_master_key --vault-name josue-keyvault --query value -o tsv)
           echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
 
+
       # ========================================
       # DOCKER BUILD & PUSH
       # ========================================
