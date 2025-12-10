@@ -57,7 +57,7 @@ jobs:
 
       - name: Fetch MASTER_KEY from Key Vault
         run: |
-          MASTER_KEY=$(az keyvault secret show --name devioz_master_key --vault-name josue-keyvault --query value -o tsv)
+          MASTER_KEY=$(az keyvault secret show --name devioz-master-key --vault-name josue-keyvault --query value -o tsv)
           echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
 
 
